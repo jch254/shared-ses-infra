@@ -54,9 +54,8 @@ locals {
   }
 }
 
-# Model-only: these modules describe the live shared SES receipt rule set, but
-# shared-ses-infra does not own Terraform state for them yet. Applying before
-# import/state migration would attempt to create existing SES resources.
+# Imported-state model: these modules own the live shared SES receipt rule set
+# and receipt rules. Activation remains intentionally unmanaged here.
 module "ses_receipt_rule_set" {
   source = "github.com/jch254/terraform-modules//ses-receipt-rule-set?ref=1.6.0"
 
@@ -94,7 +93,6 @@ module "music_submission_rule" {
   s3_object_key_prefix   = local.modeled_routes.music_submission.s3_object_key_prefix
   lambda_function_arn    = local.modeled_routes.music_submission.lambda_function_arn
   lambda_invocation_type = local.modeled_routes.music_submission.lambda_invocation_type
-  after                  = module.gtd_inbound_rule.name
   s3_position            = local.modeled_routes.music_submission.s3_position
   lambda_position        = local.modeled_routes.music_submission.lambda_position
 }

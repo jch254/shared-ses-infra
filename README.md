@@ -2,7 +2,7 @@
 
 Future owner repo for shared SES inbound routing in the shared AWS account.
 
-This repository is in a model-only phase right now. It defines the Terraform root layout, route contracts, migration guardrails, and the live shared SES receipt rule model. It must not be applied to live SES or Cloudflare resources until the existing Namaste and Lush state has been imported or moved safely.
+This repository owns the shared SES receipt rule set and receipt rules for inbound routing. It also defines the Terraform root layout, route contracts, and migration guardrails for future SES and DNS ownership.
 
 ## Why This Exists
 
@@ -36,14 +36,14 @@ AWS and Cloudflare roots remain separate. The AWS root should produce SES identi
 
 ## Current Model Status
 
-The AWS root now models the live `shared-inbound-mail-rules` receipt rule set with `terraform-modules` `1.6.0`.
+The AWS root owns the live `shared-inbound-mail-rules` receipt rule set and receipt rules with `terraform-modules` `1.6.0`.
 
 Modeled routes:
 
 - `gtd-inbound` for `parse.namasteapp.tech`, storing raw mail in `gtd-ses-emails` and invoking `gtd-ses-forwarder`
 - `music-submission` for `parse.lushauraltreats.com`, storing raw mail in `lush-aural-treats-ses-emails` and invoking `lush-aural-treats-ses-forwarder`
 
-This is not state ownership yet. Before imports or state moves, a plan is expected to show create actions for the rule set and rules because shared-ses-infra does not own those live resources in Terraform state. That plan is review evidence only and is not safe to apply.
+The receipt rule set and receipt rules have been imported into the shared-ses-infra AWS Terraform state. A clean plan is required before any future apply.
 
 The current Terraform roots contain:
 
@@ -63,7 +63,7 @@ They do not contain or manage:
 - Lambda forwarders
 - Cloudflare DNS records
 
-`activate` remains `false` on the modeled receipt rule set until state ownership and stop conditions are satisfied. The next step is import/state ownership planning, not apply. Namaste and Lush parser endpoints, parser authentication, product behavior, and forwarder implementation details remain app-local.
+`activate` remains `false` on the modeled receipt rule set, so this repo does not manage `aws_ses_active_receipt_rule_set` yet. Namaste and Lush parser endpoints, parser authentication, product behavior, and forwarder implementation details remain app-local.
 
 ## Later Verification Commands
 
