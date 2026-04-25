@@ -1,0 +1,38 @@
+environment = "prod"
+ses_region  = "ap-southeast-2"
+
+zones = {
+  namasteapp = {
+    zone_id = "TODO_NAMASTE_CLOUDFLARE_ZONE_ID"
+    domain  = "namasteapp.tech"
+  }
+
+  lush = {
+    zone_id = "TODO_LUSH_CLOUDFLARE_ZONE_ID"
+    domain  = "lushauraltreats.com"
+  }
+}
+
+parse_domain_records = {
+  namaste = {
+    zone_key           = "namasteapp"
+    parse_domain       = "parse.namasteapp.tech"
+    verification_token = null
+    dkim_tokens        = []
+    mx_name            = "parse.namasteapp.tech"
+    mx_priority        = 10
+    ttl                = 1
+    enabled            = true
+  }
+
+  lush = {
+    zone_key           = "lush"
+    parse_domain       = "parse.lushauraltreats.com"
+    verification_token = null
+    dkim_tokens        = []
+    mx_name            = "parse.lushauraltreats.com"
+    mx_priority        = 10
+    ttl                = 1
+    enabled            = true
+  }
+}

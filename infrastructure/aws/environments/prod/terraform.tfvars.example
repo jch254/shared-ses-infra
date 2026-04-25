@@ -1,0 +1,31 @@
+aws_region  = "ap-southeast-4"
+ses_region  = "ap-southeast-2"
+environment = "prod"
+
+routes = {
+  namaste = {
+    app_name                    = "namaste"
+    parse_domain                = "parse.namasteapp.tech"
+    recipients                  = ["parse.namasteapp.tech"]
+    raw_bucket_name             = "gtd-ses-emails"
+    raw_object_prefix           = ""
+    forwarder_lambda_name       = "gtd-ses-forwarder"
+    forwarder_lambda_arn        = null
+    parser_endpoint             = "https://namasteapp.tech/api/email/inbound"
+    parser_secret_parameter_arn = null
+    enabled                     = true
+  }
+
+  lush = {
+    app_name                    = "lush"
+    parse_domain                = "parse.lushauraltreats.com"
+    recipients                  = ["parse.lushauraltreats.com"]
+    raw_bucket_name             = "lush-aural-treats-ses-emails"
+    raw_object_prefix           = ""
+    forwarder_lambda_name       = "lush-aural-treats-ses-forwarder"
+    forwarder_lambda_arn        = null
+    parser_endpoint             = "https://lushauraltreats.com/api/email/inbound"
+    parser_secret_parameter_arn = null
+    enabled                     = true
+  }
+}
