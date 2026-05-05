@@ -16,6 +16,12 @@ data "aws_caller_identity" "current" {}
 
 locals {
   build_notifier_region = coalesce(var.build_notifier_region, var.aws_region)
+  cache_bucket_parts    = split("/", var.cache_bucket)
+  cache_bucket_name     = local.cache_bucket_parts[0]
+  cache_bucket_prefix   = length(local.cache_bucket_parts) > 1 ? join("/", slice(local.cache_bucket_parts, 1, length(local.cache_bucket_parts))) : ""
+  cache_bucket_object_arn = local.cache_bucket_prefix != "" ? (
+    "arn:aws:s3:::${local.cache_bucket_name}/${local.cache_bucket_prefix}/*"
+  ) : "arn:aws:s3:::${local.cache_bucket_name}/*"
 
   enabled_routes = {
     for key, route in var.routes : key => route
@@ -112,7 +118,7 @@ module "music_submission_rule" {
 }
 
 module "build_notifier" {
-  source = "github.com/jch254/terraform-modules//build-notifier?ref=1.8.3"
+  source = "github.com/jch254/terraform-modules//build-notifier?ref=1.8.4"
 
   providers = {
     aws = aws.build_notifier
@@ -174,6 +180,23 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "arn:aws:s3:::${var.remote_state_bucket}",
           "arn:aws:s3:::${var.remote_state_bucket}/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${local.cache_bucket_name}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = local.cache_bucket_object_arn
       },
       {
         Effect = "Allow"
