@@ -2,35 +2,35 @@ environment = "prod"
 ses_region  = "ap-southeast-2"
 
 zones = {
-  namasteapp = {
-    zone_id = "TODO_NAMASTE_CLOUDFLARE_ZONE_ID"
-    domain  = "namasteapp.tech"
+  app_one = {
+    zone_id = "TODO_APP_ONE_CLOUDFLARE_ZONE_ID"
+    domain  = "example-app-one.com"
   }
 
-  lush = {
-    zone_id = "TODO_LUSH_CLOUDFLARE_ZONE_ID"
-    domain  = "lushauraltreats.com"
+  app_two = {
+    zone_id = "TODO_APP_TWO_CLOUDFLARE_ZONE_ID"
+    domain  = "example-app-two.com"
   }
 }
 
 parse_domain_records = {
-  namaste = {
-    zone_key           = "namasteapp"
-    parse_domain       = "parse.namasteapp.tech"
+  app_one = {
+    zone_key           = "app_one"
+    parse_domain       = "parse.example-app-one.com"
     verification_token = null
     dkim_tokens        = []
-    mx_name            = "parse.namasteapp.tech"
+    mx_name            = "parse.example-app-one.com"
     mx_priority        = 10
     ttl                = 1
     enabled            = true
   }
 
-  lush = {
-    zone_key           = "lush"
-    parse_domain       = "parse.lushauraltreats.com"
+  app_two = {
+    zone_key           = "app_two"
+    parse_domain       = "parse.example-app-two.com"
     verification_token = null
     dkim_tokens        = []
-    mx_name            = "parse.lushauraltreats.com"
+    mx_name            = "parse.example-app-two.com"
     mx_priority        = 10
     ttl                = 1
     enabled            = true

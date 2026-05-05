@@ -5,31 +5,31 @@ environment = "prod"
 source_location = "https://github.com/jch254/shared-platform.git"
 cache_bucket    = "jch254-codebuild-cache/shared-platform"
 
-build_notification_email = "jordan@jch254.com"
+build_notification_email = "alerts@example.com"
 
 routes = {
-  namaste = {
-    app_name                    = "namaste"
-    parse_domain                = "parse.namasteapp.tech"
-    recipients                  = ["parse.namasteapp.tech"]
-    raw_bucket_name             = "gtd-ses-emails"
+  app_one = {
+    app_name                    = "app-one"
+    parse_domain                = "parse.example-app-one.com"
+    recipients                  = ["parse.example-app-one.com"]
+    raw_bucket_name             = "app-one-ses-emails"
     raw_object_prefix           = ""
-    forwarder_lambda_name       = "gtd-ses-forwarder"
+    forwarder_lambda_name       = "app-one-ses-forwarder"
     forwarder_lambda_arn        = null
-    parser_endpoint             = "https://namasteapp.tech/api/email/inbound"
+    parser_endpoint             = "https://example-app-one.com/api/email/inbound"
     parser_secret_parameter_arn = null
     enabled                     = true
   }
 
-  lush = {
-    app_name                    = "lush"
-    parse_domain                = "parse.lushauraltreats.com"
-    recipients                  = ["parse.lushauraltreats.com"]
-    raw_bucket_name             = "lush-aural-treats-ses-emails"
+  app_two = {
+    app_name                    = "app-two"
+    parse_domain                = "parse.example-app-two.com"
+    recipients                  = ["parse.example-app-two.com"]
+    raw_bucket_name             = "app-two-ses-emails"
     raw_object_prefix           = ""
-    forwarder_lambda_name       = "lush-aural-treats-ses-forwarder"
+    forwarder_lambda_name       = "app-two-ses-forwarder"
     forwarder_lambda_arn        = null
-    parser_endpoint             = "https://lushauraltreats.com/api/email/inbound"
+    parser_endpoint             = "https://example-app-two.com/api/email/inbound"
     parser_secret_parameter_arn = null
     enabled                     = true
   }

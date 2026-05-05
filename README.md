@@ -2,16 +2,15 @@
 
 Owner repo for shared account-level platform infrastructure.
 
-This repository owns shared SES inbound routing for Namaste and Lush, plus the shared CodeBuild notification infrastructure used by app repos. Product parser behavior, forwarder implementation, authentication, allowlists, task or album creation, confirmation emails, retries, outbound providers, and other app logic remain app-local.
+This repository owns shared SES inbound routing for private application routes, plus the shared CodeBuild notification infrastructure used by app repos. Product parser behavior, forwarder implementation, authentication, allowlists, domain behavior, confirmation emails, retries, outbound providers, and other app logic remain app-local.
 
 ## Why This Exists
 
-Amazon SES has one active receipt rule set per AWS account and region. Namaste and Lush both receive inbound email in `ap-southeast-2`, so a product-local active rule set can accidentally remove the other app's route.
+Amazon SES has one active receipt rule set per AWS account and region. When multiple apps receive inbound email in the same account and SES region, a product-local active rule set can accidentally remove another app's route.
 
 This repo is the shared platform boundary for:
 
-- `parse.namasteapp.tech`
-- `parse.lushauraltreats.com`
+- private app parse domains
 - future `parse.<domain>` inbound domains
 - shared CodeBuild success/failure notifications
 
@@ -36,12 +35,9 @@ infrastructure/
 
 ## Current Model
 
-The AWS root owns the live `shared-inbound-mail-rules` receipt rule set and these SES receipt rules:
+The AWS root owns the live shared receipt rule set and private app-specific SES receipt rules.
 
-- `gtd-inbound` for `parse.namasteapp.tech`, storing raw mail in `gtd-ses-emails` and invoking `gtd-ses-forwarder`
-- `music-submission` for `parse.lushauraltreats.com`, storing raw mail in `lush-aural-treats-ses-emails` and invoking `lush-aural-treats-ses-forwarder`
-
-Active receipt rule set activation is intentionally unmanaged by Terraform for now. The active selector currently points at `shared-inbound-mail-rules`; adopting `aws_ses_active_receipt_rule_set` into this repo should be a separate reviewed change.
+Active receipt rule set activation is intentionally unmanaged by Terraform for now. The active selector currently points at the shared inbound rule set; adopting `aws_ses_active_receipt_rule_set` into this repo should be a separate reviewed change.
 
 The AWS root also deploys shared CodeBuild notification infrastructure with `terraform-modules`:
 
@@ -50,7 +46,7 @@ The AWS root also deploys shared CodeBuild notification infrastructure with `ter
 - app-owned EventBridge subscription for the `shared-platform` CodeBuild project
 - outputs for app repos to target with their own EventBridge rules
 
-App repos opt in by creating their own EventBridge rule and Lambda permission with `build-notifier-project-subscription`. `reference-architecture` is the first app wired this way. Namaste and Lush remain on their local notifiers until their own follow-up migration passes.
+App repos opt in by creating their own EventBridge rule and Lambda permission with `build-notifier-project-subscription`. Private app repos remain on their local notifiers until their own follow-up migration passes.
 
 ## Build Deploys
 
@@ -67,14 +63,13 @@ Bootstrap is still manual once:
 
 shared-platform owns:
 
-- `aws_ses_receipt_rule_set` `shared-inbound-mail-rules`
-- `aws_ses_receipt_rule` `gtd-inbound`
-- `aws_ses_receipt_rule` `music-submission`
+- the shared SES receipt rule set
+- private app-specific SES receipt rules
 - the shared `shared-platform-build-notifications` SNS topic and formatter Lambda for CodeBuild project notifications
 - the `shared-platform` CodeBuild project that deploys this Terraform root
 - the `shared-platform` CodeBuild EventBridge notification subscription
 
-Namaste and Lush product stacks must not apply product-local receipt rule or receipt rule set changes that conflict with `shared-inbound-mail-rules`. Do not reactivate product-only rule sets such as `gtd-rules` or `lush-aural-treats-rules` while this shared account routes both apps through `shared-inbound-mail-rules`.
+Product stacks must not apply product-local receipt rule or receipt rule set changes that conflict with the shared inbound rule set. Do not reactivate product-only rule sets while this shared account routes multiple apps through the shared rule set.
 
 Still app-local unless migrated separately:
 
@@ -90,7 +85,7 @@ Still app-local unless migrated separately:
 Future migration work:
 
 - decide whether shared-platform should later manage `aws_ses_active_receipt_rule_set`
-- migrate Namaste and Lush CodeBuild projects onto app-owned subscriptions targeting the shared build notifier, then remove their product-local notifier resources
+- migrate private app CodeBuild projects onto app-owned subscriptions targeting the shared build notifier, then remove their product-local notifier resources
 - migrate or import parse-domain SES identities/DKIM only after state ownership is planned
 - migrate or import parse-domain DNS records only after Cloudflare ownership is planned
 - decide whether raw buckets, bucket policies, Lambda permissions, and forwarders remain app-local or move into shared modules
@@ -111,13 +106,13 @@ terraform plan -refresh=false -var-file=environments/prod/terraform.tfvars
 aws ses describe-active-receipt-rule-set --region ap-southeast-2
 ```
 
-Expected live SES result: active rule set `shared-inbound-mail-rules` with enabled rules `gtd-inbound` and `music-submission`, scan enabled, TLS `Optional`, S3 raw mail actions, and Lambda invocation type `Event`.
+Expected live SES result: the shared inbound rule set is active, private app route rules are enabled, scan is enabled, TLS is `Optional`, raw mail S3 actions are present, and Lambda invocation type is `Event`.
 
 Optional DNS sanity:
 
 ```bash
-dig MX parse.namasteapp.tech
-dig MX parse.lushauraltreats.com
+dig MX parse.example-app-one.com
+dig MX parse.example-app-two.com
 ```
 
 For local scaffold validation only:
@@ -137,13 +132,13 @@ terraform validate
 Stop before applying if any plan shows:
 
 - creation, replacement, deletion, or activation of an SES receipt rule set before all current routes are represented
-- deletion or replacement of `parse.namasteapp.tech` or `parse.lushauraltreats.com` SES identities or DKIM records
+- deletion or replacement of private app parse-domain SES identities or DKIM records
 - deletion or replacement of existing inbound MX records
 - Cloudflare MX/TXT/DKIM records with `proxied = true`
 - raw mail bucket replacement or bucket policy changes that have not been tested
 - a Lambda permission change that would prevent SES from invoking an app forwarder
-- a parser endpoint/auth change, especially Namaste's `x-namaste-email-secret` contract
-- any Lush changes outside SES inbound routing
+- a private app parser endpoint/auth change
+- any private app changes outside SES inbound routing
 - any product parser or business logic being moved into this repo
 
 Future migrations should model and import/move existing state. They should not recreate live SES or DNS resources.
