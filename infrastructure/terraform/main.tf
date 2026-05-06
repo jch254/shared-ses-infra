@@ -196,7 +196,7 @@ module "codebuild_terraform_role" {
 }
 
 module "codebuild_project" {
-  source = "github.com/jch254/terraform-modules//codebuild-project?ref=1.9.0"
+  source = "github.com/jch254/terraform-modules//codebuild-project?ref=1.13.0"
 
   providers = {
     aws = aws.platform
@@ -227,10 +227,6 @@ module "codebuild_project" {
     { name = "REMOTE_STATE_BUCKET", value = var.remote_state_bucket },
     { name = "TF_STATE_KEY", value = var.remote_state_key },
   ]
-
-  tags = {
-    Name = "${var.name}-codebuild"
-  }
 }
 
 # Future identity/DNS module usage remains disabled until existing live SES and
