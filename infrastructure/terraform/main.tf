@@ -1,15 +1,33 @@
 provider "aws" {
   region = var.ses_region
+
+  default_tags {
+    tags = {
+      Environment = var.environment
+    }
+  }
 }
 
 provider "aws" {
   alias  = "platform"
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      Environment = var.environment
+    }
+  }
 }
 
 provider "aws" {
   alias  = "build_notifier"
   region = local.build_notifier_region
+
+  default_tags {
+    tags = {
+      Environment = var.environment
+    }
+  }
 }
 
 data "aws_caller_identity" "current" {}
@@ -175,10 +193,6 @@ module "codebuild_terraform_role" {
   event_rule_arns = [
     "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:rule/${var.name}-build-notifications",
   ]
-
-  tags = {
-    Environment = var.environment
-  }
 }
 
 module "codebuild_project" {
@@ -215,8 +229,7 @@ module "codebuild_project" {
   ]
 
   tags = {
-    Name        = "${var.name}-codebuild"
-    Environment = var.environment
+    Name = "${var.name}-codebuild"
   }
 }
 
