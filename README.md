@@ -35,9 +35,7 @@ infrastructure/
 
 ## Current Model
 
-The AWS root owns the live shared receipt rule set and private app-specific SES receipt rules.
-
-Active receipt rule set activation is intentionally unmanaged by Terraform for now. The active selector currently points at the shared inbound rule set; adopting `aws_ses_active_receipt_rule_set` into this repo should be a separate reviewed change.
+The AWS root owns the live shared receipt rule set, the active receipt rule set selector, and private app-specific SES receipt rules.
 
 The AWS root also deploys shared CodeBuild notification infrastructure with `terraform-modules`:
 
@@ -46,17 +44,17 @@ The AWS root also deploys shared CodeBuild notification infrastructure with `ter
 - app-owned EventBridge subscription for the `shared-platform` CodeBuild project through the `codebuild-project` module
 - outputs for app repos to target with their own EventBridge rules
 
-App repos opt in by passing the shared formatter Lambda ARN into `codebuild-project` with `build_notifier_lambda_function_arn`. Private app repos remain on their local notifiers until their own follow-up migration passes.
+App repos opt in by passing the shared formatter Lambda ARN into `codebuild-project` with `build_notifier_lambda_function_arn`; app repos keep their own EventBridge subscriptions while targeting the shared formatter Lambda.
 
 ## Build Deploys
 
 The AWS root creates a `shared-platform` CodeBuild project in `aws_region`. It runs [buildspec.yml](buildspec.yml), which calls [infrastructure/deploy-infrastructure.bash](infrastructure/deploy-infrastructure.bash) and applies `infrastructure/terraform`.
 
-Bootstrap is still manual once:
+For a fresh account or a full rebuild, bootstrap is manual once:
 
 1. Review `infrastructure/terraform/environments/prod/terraform.tfvars`.
 2. Run a local/one-off `terraform plan` and `terraform apply` from `infrastructure/terraform`.
-3. Confirm the SNS email subscription.
+3. Confirm the SNS email subscription if it is newly created.
 4. Let the `shared-platform` CodeBuild webhook handle later AWS-root changes.
 
 ## Ownership Boundary
@@ -64,6 +62,7 @@ Bootstrap is still manual once:
 shared-platform owns:
 
 - the shared SES receipt rule set
+- active SES receipt rule set selection for the shared rule set
 - private app-specific SES receipt rules
 - the shared `shared-platform-build-notifications` SNS topic and formatter Lambda for CodeBuild project notifications
 - the `shared-platform` CodeBuild project that deploys this Terraform root
@@ -84,12 +83,9 @@ Still app-local unless migrated separately:
 
 Future migration work:
 
-- decide whether shared-platform should later manage `aws_ses_active_receipt_rule_set`
-- migrate private app CodeBuild projects onto app-owned subscriptions targeting the shared build notifier, then remove their product-local notifier resources
 - migrate or import parse-domain SES identities/DKIM only after state ownership is planned
 - migrate or import parse-domain DNS records only after Cloudflare ownership is planned
 - decide whether raw buckets, bucket policies, Lambda permissions, and forwarders remain app-local or move into shared modules
-- retire any remaining product-local duplicate receipt rule/rule-set resources only after a reviewed state plan
 
 ## Verification
 
@@ -111,8 +107,8 @@ Expected live SES result: the shared inbound rule set is active, private app rou
 Optional DNS sanity:
 
 ```bash
-dig MX parse.example-app-one.com
-dig MX parse.example-app-two.com
+dig MX parse.namasteapp.tech
+dig MX parse.lushauraltreats.com
 ```
 
 For local scaffold validation only:
@@ -131,7 +127,9 @@ terraform validate
 
 Stop before applying if any plan shows:
 
-- creation, replacement, deletion, or activation of an SES receipt rule set before all current routes are represented
+- creation, replacement, deletion, or deactivation of the shared SES receipt rule set
+- activation of any receipt rule set other than `shared-inbound-mail-rules`
+- deletion or replacement of existing private app SES receipt rules before their replacement routes are represented
 - deletion or replacement of private app parse-domain SES identities or DKIM records
 - deletion or replacement of existing inbound MX records
 - Cloudflare MX/TXT/DKIM records with `proxied = true`

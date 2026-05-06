@@ -64,7 +64,7 @@ output "route_summaries" {
 }
 
 output "receipt_rule_set_name" {
-  description = "Name of the modeled shared SES receipt rule set. Activation remains disabled."
+  description = "Name of the active shared SES receipt rule set."
   value       = module.ses_receipt_rule_set.name
 }
 

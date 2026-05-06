@@ -92,13 +92,13 @@ locals {
   }
 }
 
-# Imported-state model: these modules own the live shared SES receipt rule set
-# and receipt rules. Activation remains intentionally unmanaged here.
+# Imported-state model: these modules own the live shared SES receipt rule set,
+# active selector, and receipt rules.
 module "ses_receipt_rule_set" {
   source = "github.com/jch254/terraform-modules//ses-receipt-rule-set?ref=1.15.0"
 
   name     = "shared-inbound-mail-rules"
-  activate = false
+  activate = true
 }
 
 module "gtd_inbound_rule" {
